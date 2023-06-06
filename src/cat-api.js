@@ -1,37 +1,45 @@
-const API_KEY =
+const YOUR_API_KEY =
   'live_StFJuQrjrLxUbZHjXuy4xvVkX5F8Glrm5OK6AwPQEf5ETNQZiWPko1KC4BSHcjub';
+const url = 'https://api.thecatapi.com/v1/';
 
-export function fetchBreeds() {
-  return fetch('https://api.thecatapi.com/v1/breeds', {
+function fetchBreeds() {
+  const requestOptions = {
+    method: 'GET',
     headers: {
-      'x-api-key': API_KEY,
+      'x-api-key': YOUR_API_KEY,
     },
-  })
-    .then(response => response.json())
-    .then(data => data)
-    .catch(error => {
-      throw error;
-    });
-}
+  };
 
-export function fetchCatByBreed(breedId) {
-  return fetch(
-    `https://api.thecatapi.com/v1/images/search?breed_ids=${breedId}`,
-    {
-      headers: {
-        'x-api-key': API_KEY,
-      },
-    }
-  )
-    .then(response => response.json())
-    .then(data => {
-      const cat = data[0];
-      return {
-        url: cat.url,
-        description: cat.breeds[0].description,
-      };
+  return fetch(`${url}breeds`, requestOptions)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error();
+      }
+      return response.json();
     })
     .catch(error => {
-      throw error;
+      throw new Error(`Error: ${error.message}`);
     });
 }
+
+function fetchCatByBreed(breedId) {
+  const requestOptions = {
+    method: 'GET',
+    headers: {
+      'x-api-key': YOUR_API_KEY,
+    },
+  };
+
+  return fetch(`${url}images/${breedId}`, requestOptions)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error();
+      }
+      return response.json();
+    })
+    .catch(error => {
+      throw new Error(`Error: ${error.message}`);
+    });
+}
+
+export { fetchBreeds, fetchCatByBreed };

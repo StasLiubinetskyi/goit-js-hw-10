@@ -1,60 +1,103 @@
-import { fetchBreeds, fetchCatByBreed } from './cat-api.js';
+import { fetchBreeds, fetchCatByBreed } from './cat-api';
+import Notiflix from 'notiflix';
 
-const breedSelect = document.querySelector('.breed-select');
-const loader = document.querySelector('.loader');
-const error = document.querySelector('.error');
-const catInfo = document.querySelector('.cat-info');
-
-function populateBreeds() {
-  fetchBreeds()
-    .then(breeds => {
-      breeds.forEach(breed => {
-        const option = document.createElement('option');
-        option.value = breed.id;
-        option.textContent = breed.name;
-        breedSelect.appendChild(option);
-      });
-    })
-    .catch(error => {
-      console.error('Error fetching breeds:', error);
-    });
-}
-
-function displayCatInfo(breedId) {
-  fetchCatByBreed(breedId)
-    .then(cat => {
-      const img = document.createElement('img');
-      img.src = cat.url;
-
-      const name = document.createElement('h3');
-      name.textContent = `Breed: ${
-        breedSelect.options[breedSelect.selectedIndex].text
-      }`;
-
-      const description = document.createElement('p');
-      description.textContent = `Description: ${cat.description}`;
-
-      catInfo.innerHTML = '';
-      catInfo.appendChild(img);
-      catInfo.appendChild(name);
-      catInfo.appendChild(description);
-    })
-    .catch(error => {
-      console.error('Error fetching cat info:', error);
-    });
-}
-
-breedSelect.addEventListener('change', () => {
-  const selectedBreedId = breedSelect.value;
-
-  if (selectedBreedId) {
-    loader.style.display = 'block';
-    catInfo.innerHTML = '';
-
-    displayCatInfo(selectedBreedId).finally(() => {
-      loader.style.display = 'none';
-    });
-  }
+const select = new SlimSelect({
+  select: '#selectElement',
 });
 
-populateBreeds();
+const refs = {
+  selectEl: document.querySelector('#selectElement'),
+  loaderEl: document.querySelector('.loader'),
+  errorEl: document.querySelector('.error'),
+  catInfoContainer: document.querySelector('.cat-info'),
+};
+
+function showLoader() {
+  refs.loaderEl.classList.remove('is-hidden');
+}
+
+function hideLoader() {
+  refs.loaderEl.classList.add('is-hidden');
+}
+
+function showContainer() {
+  refs.catInfoContainer.classList.remove('is-hidden');
+}
+
+function hideContainer() {
+  refs.catInfoContainer.classList.add('is-hidden');
+}
+
+function showBreedSelect() {
+  refs.selectEl.classList.remove('is-hidden');
+}
+
+function hideBreedSelect() {
+  refs.selectEl.classList.add('is-hidden');
+}
+
+function showError() {
+  refs.errorEl.classList.remove('is-hidden');
+}
+
+function hideError() {
+  refs.errorEl.classList.add('is-hidden');
+}
+
+fetchBreeds()
+  .then(res => {
+    const options = res.map(({ reference_image_id, name }) => ({
+      value: reference_image_id,
+      text: name,
+    }));
+    options.unshift({ value: '', text: '' });
+    select.setData(options);
+    select.selectEl.classList.remove('is-hidden');
+    refs.loaderEl.classList.add('is-hidden');
+  })
+  .catch(err => {
+    hideLoader();
+    hideBreedSelect();
+    hideContainer();
+    showError();
+    Notiflix.Notify.failure(`Error: ${err.message}`);
+  });
+
+let firstLoade = true;
+refs.selectEl.addEventListener('change', event => {
+  const breedId = event.target.value;
+  showBreedSelect();
+  showLoader();
+  hideError();
+  fetchCatByBreed(breedId)
+    .then(res => {
+      if (firstLoade) {
+        firstLoade = false;
+        return;
+      }
+      console.log(res);
+      const {
+        url,
+        breeds: [{ name, description, temperament }],
+      } = res;
+      const marcup = `
+        <img src="${url}" alt="${name}">
+        <div class="title">
+        <h3>${name}</h3>
+        <p>${description}</p>
+        <p><strong>Temperament:</strong> ${temperament}</p>
+        </div>
+      `;
+
+      refs.catInfoContainer.innerHTML = marcup;
+      hideLoader();
+      refs.selectEl.value = '';
+    })
+    .catch(err => {
+      hideLoader();
+      hideBreedSelect();
+      hideContainer();
+      showError();
+      Notiflix.Notify.failure(`Error: ${err.message}`);
+    });
+});
