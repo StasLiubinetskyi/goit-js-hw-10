@@ -28,6 +28,14 @@ function hideContainer() {
   refs.catInfoContainer.classList.add('is-hidden');
 }
 
+function showError() {
+  refs.errorEl.classList.remove('is-hidden');
+}
+
+function hideError() {
+  refs.errorEl.classList.add('is-hidden');
+}
+
 function showBreedSelect() {
   refs.selectEl.classList.remove('is-hidden');
 }
@@ -36,12 +44,12 @@ function hideBreedSelect() {
   refs.selectEl.classList.add('is-hidden');
 }
 
-function showError() {
-  refs.errorEl.classList.remove('is-hidden');
-}
-
-function hideError() {
-  refs.errorEl.classList.add('is-hidden');
+function handleFetchError(err) {
+  hideLoader();
+  hideBreedSelect();
+  hideContainer();
+  showError();
+  Notiflix.Notify.failure(`Error: ${err.message}`);
 }
 
 fetchBreeds()
@@ -52,18 +60,12 @@ fetchBreeds()
     }));
     options.unshift({ value: '', text: '' });
     select.setData(options);
-    select.selectEl.classList.remove('is-hidden');
-    refs.loaderEl.classList.add('is-hidden');
-  })
-  .catch(err => {
+    showBreedSelect();
     hideLoader();
-    hideBreedSelect();
-    hideContainer();
-    showError();
-    Notiflix.Notify.failure(`Error: ${err.message}`);
-  });
+  })
+  .catch(handleFetchError);
 
-let firstLoade = true;
+let isFirstLoad = true;
 refs.selectEl.addEventListener('change', event => {
   const breedId = event.target.value;
   showBreedSelect();
@@ -71,8 +73,8 @@ refs.selectEl.addEventListener('change', event => {
   hideError();
   fetchCatByBreed(breedId)
     .then(res => {
-      if (firstLoade) {
-        firstLoade = false;
+      if (isFirstLoad) {
+        isFirstLoad = false;
         return;
       }
       console.log(res);
@@ -80,24 +82,18 @@ refs.selectEl.addEventListener('change', event => {
         url,
         breeds: [{ name, description, temperament }],
       } = res;
-      const marcup = `
+      const markup = `
         <img src="${url}" alt="${name}">
         <div class="title">
-        <h3>${name}</h3>
-        <p>${description}</p>
-        <p><strong>Temperament:</strong> ${temperament}</p>
+          <h3>${name}</h3>
+          <p>${description}</p>
+          <p><strong>Temperament:</strong> ${temperament}</p>
         </div>
       `;
 
-      refs.catInfoContainer.innerHTML = marcup;
+      refs.catInfoContainer.innerHTML = markup;
       hideLoader();
       refs.selectEl.value = '';
     })
-    .catch(err => {
-      hideLoader();
-      hideBreedSelect();
-      hideContainer();
-      showError();
-      Notiflix.Notify.failure(`Error: ${err.message}`);
-    });
+    .catch(handleFetchError);
 });
