@@ -36,17 +36,8 @@ function hideError() {
   refs.errorEl.classList.add('is-hidden');
 }
 
-function showBreedSelect() {
-  refs.selectEl.classList.remove('is-hidden');
-}
-
-function hideBreedSelect() {
-  refs.selectEl.classList.add('is-hidden');
-}
-
 function handleFetchError(err) {
   hideLoader();
-  hideBreedSelect();
   hideContainer();
   showError();
   Notiflix.Notify.failure(`Error: ${err.message}`);
@@ -60,15 +51,17 @@ fetchBreeds()
     }));
     options.unshift({ value: '', text: '' });
     select.setData(options);
-    showBreedSelect();
-    hideLoader();
+    showLoader();
   })
-  .catch(handleFetchError);
+  .catch(handleFetchError)
+  .finally(() => {
+    hideLoader();
+    showContainer();
+  });
 
 let isFirstLoad = true;
 refs.selectEl.addEventListener('change', event => {
   const breedId = event.target.value;
-  showBreedSelect();
   showLoader();
   hideError();
   fetchCatByBreed(breedId)
