@@ -51,13 +51,10 @@ fetchBreeds()
     }));
     options.unshift({ value: '', text: '' });
     select.setData(options);
-    showLoader();
-  })
-  .catch(handleFetchError)
-  .finally(() => {
     hideLoader();
     showContainer();
-  });
+  })
+  .catch(handleFetchError);
 
 let isFirstLoad = true;
 refs.selectEl.addEventListener('change', event => {
@@ -88,5 +85,8 @@ refs.selectEl.addEventListener('change', event => {
       hideLoader();
       refs.selectEl.value = '';
     })
-    .catch(handleFetchError);
+    .catch(handleFetchError)
+    .finally(() => {
+      hideLoader();
+    });
 });
