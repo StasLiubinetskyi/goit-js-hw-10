@@ -24,9 +24,7 @@ function showContainer() {
   refs.catInfoContainer.classList.remove('is-hidden');
 }
 
-function hideContainer() {
-  refs.catInfoContainer.classList.add('is-hidden');
-}
+
 
 function showError() {
   refs.errorEl.classList.remove('is-hidden');
